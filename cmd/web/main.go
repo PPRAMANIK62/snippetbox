@@ -18,11 +18,12 @@ import (
 )
 
 type application struct {
-	infoLog  *log.Logger
-	errorLog *log.Logger
-	snippets *models.SnippetModel
-	templateCache map[string]*template.Template
-	formDecoder *form.Decoder
+	infoLog        *log.Logger
+	errorLog       *log.Logger
+	snippets       *models.SnippetModel
+	users          *models.UserModel
+	templateCache  map[string]*template.Template
+	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
 }
 
@@ -53,11 +54,12 @@ func main() {
 	sessionManager.Cookie.Secure = true
 
 	app := &application{
-		infoLog: infoLog,
-		errorLog: errorLog,
-		snippets: &models.SnippetModel{DB: db},
-		templateCache: templateCache,
-		formDecoder: formDecoder,
+		infoLog:        infoLog,
+		errorLog:       errorLog,
+		snippets:       &models.SnippetModel{DB: db},
+		users:          &models.UserModel{DB: db},
+		templateCache:  templateCache,
+		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
 	}
 
@@ -69,13 +71,13 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errorLog,
-		Handler:  app.routes(),
+		Addr:      *addr,
+		ErrorLog:  errorLog,
+		Handler:   app.routes(),
 		TLSConfig: tlsConfig,
 		// add idle, read and write timeouts to the server
-		IdleTimeout: time.Minute,
-		ReadTimeout: 5 * time.Second,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
