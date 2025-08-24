@@ -8,14 +8,42 @@ import (
 
 	"github.com/PPRAMANIK62/snippetbox/internal/models"
 	"github.com/PPRAMANIK62/snippetbox/internal/validator"
+	"github.com/go-playground/form/v4"
 	"github.com/julienschmidt/httprouter"
 )
 
 type snippetCreateForm struct {
-	Title   	string
-	Content 	string
-	Expires 	int
-	validator.Validator
+	Title   	string  `form:"title"`
+	Content 	string  `form:"content"`
+	Expires 	int     `form:"expires"`
+	validator.Validator `form:"-"`
+}
+
+// the second parameter here, dst, is the target destination
+// that we want to decode the form data into
+func (app *application) decodePostForm(r *http.Request, dst any) error {
+	err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+
+	err = app.formDecoder.Decode(dst, r.PostForm)
+	if err != nil {
+		// if we try to use an invalid target destination, the Decode()
+		// method will return an error with the type
+		// *form.InvalidDecoderError.
+		// we use errors.As() to check for this and raise a panic
+		// rether than returning the error
+		var invalidDecoderError *form.InvalidDecoderError
+
+		if errors.As(err, &invalidDecoderError) {
+			panic(err)
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -67,24 +95,12 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	var form snippetCreateForm
+
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
-	}
-
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	// create an instance of snippetCreateForm struct containing the values
-	// from the form and empty map form any validation errors
-	form := snippetCreateForm{
-		Title:   	r.PostForm.Get("title"),
-		Content: 	r.PostForm.Get("content"),
-		Expires: 	expires,
 	}
 
 	form.CheckField(form.Validator.NotBlank(form.Title), "title", "This field cannot be blank")
