@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/PPRAMANIK62/snippetbox/internal/models"
+	"github.com/PPRAMANIK62/snippetbox/internal/validator"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -16,7 +15,7 @@ type snippetCreateForm struct {
 	Title   	string
 	Content 	string
 	Expires 	int
-	FieldErrors map[string]string
+	validator.Validator
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -86,32 +85,20 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		Title:   	r.PostForm.Get("title"),
 		Content: 	r.PostForm.Get("content"),
 		Expires: 	expires,
-		FieldErrors: make(map[string]string),
 	}
 
-	// update the validation checks so that they operate on the
-	// snippetCreateForm instance
-	if strings.TrimSpace(form.Title) == "" {
-		form.FieldErrors["title"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Title) > 100 {
-		form.FieldErrors["title"] = "Title cannot be longer than 100 characters"
-	}
-
-	if strings.TrimSpace(form.Content) == "" {
-		form.FieldErrors["content"] = "This field cannot be blank"
-	}
-
-	if expires != 1 && expires != 7 && expires != 365 {
-		form.FieldErrors["expires"] = "This field must be equal to 1, 7 or 365"
-	}
+	form.CheckField(form.Validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(form.Validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(form.Validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(form.Validator.PermittedInt(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
 
 	// if there are any validation errors re-display the create.html
 	// template, passing in the snippetCreateForm instance as dynamic data
 	// in the Form field
-	if len(form.FieldErrors) > 0 {
+	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
-		app.render(w, http.StatusOK, "create.html", data)
+		app.render(w, http.StatusUnprocessableEntity, "create.html", data)
 		return
 	}
 
