@@ -77,9 +77,16 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	
+	// use PopString() method to retrieve the value for the "flash" key.
+	// PopString() also deletes the key and value from the session data
+	// so it acts like a one-time fetch. if there is no matching key in 
+	// the session data, this will return the empty string
+	flash := app.sessionManager.PopString(r.Context(), "flash")
 
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
+	data.Flash = flash
 
 	app.render(w, http.StatusOK, "view.html", data)
 }
@@ -122,6 +129,8 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		app.serverError(w, err)
 	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Snippet sucessfully created!")
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
