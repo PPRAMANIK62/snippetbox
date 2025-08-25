@@ -189,8 +189,8 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 }
 
 type userLoginForm struct {
-	Email    			string `form:"email"`
-	Password 			string `form:"password"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
 	validator.Validator `form:"-"`
 }
 
