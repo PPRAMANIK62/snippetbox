@@ -142,7 +142,31 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Create a new user...")
+	// declare a zero-valued instance of userSignupForm struct
+	var form userSignupForm
+
+	// parse the form data
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// validate form contents
+	form.CheckField(form.Validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(form.Validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(form.Validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(form.Validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(form.Validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+
+	// if any errors, re-display the signup form along with a 422 status code
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+	}
+
+	fmt.Fprintln(w, "Creating a new user...")
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {

@@ -1,10 +1,13 @@
 package validator
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 	"unicode/utf8"
 )
+
+var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // Validator type contains a map of validation errors for form fields
 type Validator struct {
@@ -50,4 +53,15 @@ func (v *Validator) MaxChars(value string, n int) bool {
 // PermittedInt() returns true if a value is in a list of permitted integers
 func (v *Validator) PermittedInt(value int, permittedValues ...int) bool {
 	return slices.Contains(permittedValues, value)
+}
+
+// MinChars() returns true if a value contains at least n characters
+func (v *Validator) MinChars(value string, n int) bool {
+	return utf8.RuneCountInString(value) >= n
+}
+
+// Matches() returns true if a value matches a provided compiled
+// regex pattern
+func (v *Validator) Matches(value string, rx *regexp.Regexp) bool {
+	return rx.MatchString(value)
 }
