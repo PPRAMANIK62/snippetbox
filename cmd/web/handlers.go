@@ -247,10 +247,27 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	// add the id of the current user to the session
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
+	// add a flash message to the session
+	app.sessionManager.Put(r.Context(), "flash", "You've been logged in successfully!")
+
 	// redirect the user to the snippet page
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Logout the user...")
+	// change the session id
+	err := app.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// remove the authenticatedUserID from the session
+	app.sessionManager.Remove(r.Context(), "authenticatedUserID")
+
+	// add a flash message to the session
+	app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+
+	// redirect the user to the login page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
