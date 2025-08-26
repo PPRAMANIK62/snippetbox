@@ -57,7 +57,7 @@ func (v *Validator) MaxChars(value string, n int) bool {
 }
 
 // PermittedInt() returns true if a value is in a list of permitted integers
-func (v *Validator) PermittedInt(value int, permittedValues ...int) bool {
+func PermittedValue[T comparable](value T, permittedValues ...T) bool {
 	return slices.Contains(permittedValues, value)
 }
 
