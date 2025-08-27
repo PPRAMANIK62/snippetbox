@@ -87,7 +87,6 @@ func TestUserSignup(t *testing.T) {
 	// extract the CSRF token from the response body
 	_, _, body := ts.get(t, "/user/signup")
 	validCSRFToken := extractCSRFToken(t, body)
-	t.Log(validCSRFToken)
 
 	const (
 		validName = "Test"
