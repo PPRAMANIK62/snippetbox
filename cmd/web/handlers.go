@@ -164,6 +164,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		return
 	}
 
 	// create a new user record in the database
